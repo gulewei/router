@@ -57,6 +57,19 @@ function createRouter(history$$1) {
   };
 }
 
+var globalContext = {
+  history: {}
+};
+
+function getGlobalContext() {
+  return globalContext;
+}
+
+function setGlobalContext(context) {
+  globalContext.history = context.history;
+  return globalContext;
+}
+
 function withSubscribe(app) {
   return function createAppWithSubscription(state, actions, view, rootEl, subscribe) {
     var appActions = app(state, actions, view, rootEl);
@@ -66,6 +79,8 @@ function withSubscribe(app) {
 }
 
 function withRouter(app, history$$1) {
+  setGlobalContext(history$$1);
+
   return function createAppWithRouter(state, actions, view, rootEl, subscribe) {
     var router = createRouter(history$$1);
     // let wraperState = { ...state, router: router.state }
@@ -122,14 +137,6 @@ function parseRoute(path, url, options) {
   }
 
   return createMatch(false, path, url.slice(0, -1), params);
-}
-
-var globalContext = {
-  history: {}
-};
-
-function getGlobalContext() {
-  return globalContext;
 }
 
 function Route(props) {
