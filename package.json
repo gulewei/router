@@ -2,11 +2,8 @@
   "name": "hyperapp-hoa-router",
   "version": "0.0.1",
   "description": "another router with hoa function for hyperapp",
-  "main": "index.js",
-  "scripts": {
-    "start": "hyperapp-scripts",
-    "build": "hyperapp-scripts build"
-  },
+  "main": "dist/index.js",
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/venecy/router.git"
@@ -27,7 +24,12 @@
     "hyperapp": "^1.1.2"
   },
   "devDependencies": {
-    "cra-hyperapp": "0.0.4",
-    "react-scripts": "^1.1.1"
+    "babel-cli": "^6.26.0",
+    "rollup": "^0.50.1",
+    "rollup-plugin-babel": "^3.0.3",
+    "rollup-plugin-commonjs": "^8.3.0",
+    "rollup-plugin-node-resolve": "^3.0.3",
+    "rollup-plugin-replace": "^2.0.0",
+    "rollup-plugin-uglify": "^3.0.0"
   }
 }
