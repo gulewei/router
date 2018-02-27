@@ -1,4 +1,4 @@
-import { getGlobalContext } from './context'
+import { getGlobalContext } from '../context'
 
 /**
  * TODO: add a [from] prop which can be used in Switch

@@ -1,5 +1,5 @@
 import { parseRoute } from "./parseRoute"
-import { getGlobalContext } from './context'
+import { getGlobalContext } from '../context'
 
 export function Route (props) {
   var { history } = getGlobalContext()

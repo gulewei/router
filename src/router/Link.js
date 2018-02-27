@@ -1,5 +1,5 @@
 import { h } from 'hyperapp'
-import { getGlobalContext } from './context'
+import { getGlobalContext } from '../context'
 import { createLocation } from 'history'
 
 const isModifiedEvent = event =>
