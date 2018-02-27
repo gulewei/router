@@ -10,7 +10,7 @@ function withSubscribe (app) {
 }
 
 function withRouter (app, history) {
-  setGlobalContext(history)
+  setGlobalContext({ history })
 
   return function createAppWithRouter (state, actions, view, rootEl, subscribe) {
     let router = createRouter(history)

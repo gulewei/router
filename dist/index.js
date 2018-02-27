@@ -79,7 +79,7 @@ function withSubscribe(app) {
 }
 
 function withRouter(app, history$$1) {
-  setGlobalContext(history$$1);
+  setGlobalContext({ history: history$$1 });
 
   return function createAppWithRouter(state, actions, view, rootEl, subscribe) {
     var router = createRouter(history$$1);
