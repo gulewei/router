@@ -4,7 +4,8 @@
   "description": "another router with hoa function for hyperapp",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "hyperapp-scripts",
+    "build": "hyperapp-scripts build"
   },
   "repository": {
     "type": "git",
@@ -24,5 +25,9 @@
   "dependencies": {
     "history": "^4.7.2",
     "hyperapp": "^1.1.2"
+  },
+  "devDependencies": {
+    "cra-hyperapp": "0.0.4",
+    "react-scripts": "^1.1.1"
   }
 }

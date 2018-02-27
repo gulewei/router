@@ -31,7 +31,7 @@ function handleHistory ({ url, actionType }) {
   }
 }
 
-function router (history) {
+function createRouter (history) {
   return {
     state: {
       urls: [history.location.pathname],
@@ -48,4 +48,4 @@ function router (history) {
   }
 }
 
-export { router }
+export { createRouter }
