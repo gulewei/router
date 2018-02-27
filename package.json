@@ -1,24 +1,28 @@
 {
-  "name": "router",
-  "version": "1.0.0",
-  "description": "",
+  "name": "hyperapp-hoa-router",
+  "version": "0.0.1",
+  "description": "another router with hoa function for hyperapp",
   "main": "index.js",
   "scripts": {
-    "start": "hyperapp-scripts",
-    "build": "hyperapp-scripts build"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/venecy/router.git"
+  },
+  "keywords": [
+    "hyperapp",
+    "router",
+    "hoa"
+  ],
+  "author": "gulewei",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/venecy/router/issues"
+  },
+  "homepage": "https://github.com/venecy/router#readme",
   "dependencies": {
     "history": "^4.7.2",
-    "path-to-regexp": "^2.1.0"
-  },
-  "devDependencies": {
-    "cra-hyperapp": "0.0.4",
-    "eslint": "^4.18.1",
-    "eslint-plugin-react": "^7.7.0",
-    "hyperapp": "^1.1.2",
-    "react-script": "^2.0.5",
-    "react-scripts": "^1.1.1"
+    "hyperapp": "^1.1.2"
   }
 }

@@ -1,4 +1,4 @@
-import { initRouter } from './router'
+import { router } from '../router/router'
 
 function withSubscribe (app) {
   return function createAppWithSubscription (state, actions, view, rootEl, subscribe) {
@@ -8,9 +8,9 @@ function withSubscribe (app) {
   }
 }
 
-function withRouter (app, options) {
+function withRouter (app, history) {
   return function createAppWithRouter (state, actions, view, rootEl, subscribe) {
-    var router = initRouter(options)
+    var router = router(history)
     var wraperState = { ...state, router: router.state }
     var wraperActions = { ...actions, router: router.actions }
 

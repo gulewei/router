@@ -1,3 +1,9 @@
+/**
+ * TODO: support Redirect 
+ * @param {*} props 
+ * @param {*} children 
+ */
+
 export function Switch(props, children) {
   var i = 0
   while (!children[i] && i < children.length) i++

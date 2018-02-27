@@ -2,8 +2,6 @@ var globalContext = {
   history: {}
 }
 
-window.$globalContext = globalContext
-
 function getGlobalContext () {
   return globalContext
 }
