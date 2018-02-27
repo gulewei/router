@@ -1,6 +1,6 @@
-## another router with hoa function for hyperapp
+## another router for hyperapp
 
-## provider a samilar api with react-router
+## provider a react-router api and a hoa function with router
 
 ```js
 
