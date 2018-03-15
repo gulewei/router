@@ -1,9 +1,9 @@
 import { h } from 'hyperapp'
 import { history } from '../store'
-import { Link } from '../modules/router'
+import { Link } from 'hyperapp-hoa-router'
 
-const BackLink = () => (
-  <button onclick={() => history.goBack()}>back</button>
+const BackButton = () => (
+  <button class='back-button' onclick={() => history.goBack()}>back</button>
 )
 
 const withBlock = () => {
@@ -13,10 +13,10 @@ const withBlock = () => {
 }
 
 const LinkWithBlock = () => {
-  return <Link onclick={withBlock} to='/result' >link with block</Link>
+  return <Link class="link-with-block" onclick={withBlock} to='/result' >link with block</Link>
 }
 
 export {
-  BackLink,
+  BackButton,
   LinkWithBlock
 }

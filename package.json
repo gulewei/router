@@ -4,7 +4,8 @@
   "description": "another router with hoa function for hyperapp",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "publish": "rollup -c && npm version patch && npm publish"
   },
   "repository": {
     "type": "git",

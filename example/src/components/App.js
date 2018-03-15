@@ -1,66 +1,55 @@
 import { h } from 'hyperapp'
-import { Route, Switch, Link } from '../modules/router'
-import { BackLink, LinkWithBlock } from './Links'
+import { Route, Switch, Link } from 'hyperapp-hoa-router'
+import { BackButton, LinkWithBlock } from './Links'
+import Page from './Page'
 
 const HomePage = () => {
   return (
-    <Page key="home-page">
-      <h1>Hi .</h1>
-      <Link to="/list.html">list</Link>
+    <Page key="home">
+      <h1 class="page-header">Hi .</h1>
+      <Link class="page-link" to="/list.html">list</Link>
     </Page>
   )
 }
 
 const ListPage = () => (
-  <Page key='list-page'>
-    <h1>List .</h1>
-    <BackLink />
-    <br />
-    <Link to="/item?id=123">item</Link>
-    <br />
-    <Link to="/item?id=124">item</Link>
-    <br />
-    <Link to="/item?id=125">item</Link>
-    <br />
-    <Link to="/item?id=126">item</Link>
-    <br />
-    <Link to='/'>home</Link>
+  <Page key="list">
+    <h1 class="page-header">List .</h1>
+    <BackButton />
+    <Link class="page-link" to="/item/123">item: 123</Link>
+    <Link class="page-link" to="/item/124">item: 124</Link>
+    <Link class="page-link" to="/item/125">item: 125</Link>
+    <Link class="page-link" to="/item/126">item: 126</Link>
+    <Link class="direct-home-link" to='/'>home</Link>
   </Page>
 )
 
-const ItemPage = () => (
-  <div class="page-container item-page" key='item-page'>
-    <h1>Item .</h1>
-    <BackLink />
-    <br />
+const ItemPage = ({ match }) => (
+  <Page key="item">
+    <h1 class="page-header">Item: {match.params.id}</h1>
+    <BackButton />
     <LinkWithBlock />
-    <br />
-    <Link to="/operation">operation</Link>
-    <br />
-    <Link to='/'>home</Link>
-  </div>
+    <Link class="page-link" to="/operation">operation</Link>
+    <Link class="direct-home-link" to='/'>home</Link>
+  </Page>
 )
 
 const OperationPage = () => (
-  <div class="page-container operation-page" key='operation-page'>
-    <h1>Operation .</h1>
-    <BackLink />
-    <br />
-    <Link to="/result">result</Link>
-    <br />
-    <Link to='/'>home</Link>
-  </div>
+  <Page key='operation'>
+    <h1 class="page-header">Operation .</h1>
+    <BackButton />
+    <Link class="page-link" to="/result">result</Link>
+    <Link class="direct-home-link" to='/'>home</Link>
+  </Page>
 )
 
 const ResultPage = () => (
-  <div class="page-container result-page" key='result-page'>
-    <h1>Result .</h1>
-    <BackLink />
-    <br />
-    <Link to="/">Home</Link>
-    <br />
-    <Link to='/'>home</Link>
-  </div>
+  <Page key='result'>
+    <h1 class="page-header">Result .</h1>
+    <BackButton />
+    <Link class="page-link" to="/">Home</Link>
+    <Link class="direct-home-link" to='/'>home</Link>
+  </Page>
 )
 
 const App = (state, actions) => {
@@ -71,7 +60,7 @@ const App = (state, actions) => {
     <Switch>
       <Route path='/' render={HomePage} />
       <Route path='/list.html' render={ListPage} />
-      <Route path='/item' render={ItemPage} />
+      <Route path='/item/:id' render={ItemPage} />
       <Route path='/operation' render={OperationPage} />
       <Route path='/result' render={ResultPage} />
     </Switch>
