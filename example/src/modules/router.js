@@ -4,24 +4,9 @@
 	(factory((global.HoaRouter = {}),global.hyperapp,global.History));
 }(this, (function (exports,hyperapp,history) { 'use strict';
 
-var globalContext = {
-  history: {}
-};
-
-function getGlobalContext() {
-  return globalContext;
-}
-
-function setGlobalContext(context) {
-  globalContext.history = context.history;
-  return globalContext;
-}
-
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function createRouter(history$$1) {
-  setGlobalContext({ history: history$$1 });
-
   return {
     state: {
       urls: [history$$1.location.pathname],
@@ -78,6 +63,19 @@ function createRouter(history$$1) {
   };
 }
 
+var globalContext = {
+  history: {}
+};
+
+function getGlobalContext() {
+  return globalContext;
+}
+
+function setGlobalContext(context) {
+  globalContext.history = context.history;
+  return globalContext;
+}
+
 function withSubscribe(app) {
   return function createAppWithSubscription(state, actions, view, rootEl, subscribe) {
     var appActions = app(state, actions, view, rootEl);
@@ -87,14 +85,17 @@ function withSubscribe(app) {
 }
 
 function withRouter(app, history$$1) {
-  return function createAppWithRouter(state, actions, view, rootEl, subscribe) {
-    var myRouter = createRouter(history$$1);
+  setGlobalContext({ history: history$$1 });
 
-    state.router = myRouter.state;
-    actions.router = myRouter.actions;
+  return function createAppWithRouter(state, actions, view, rootEl, subscribe) {
+    var router = createRouter(history$$1);
+    // let wraperState = { ...state, router: router.state }
+    // let wraperActions = { ...actions, router: router.actions }
+    state.router = router.state;
+    actions.router = router.actions;
 
     return withSubscribe(app)(state, actions, view, rootEl, function (appActions) {
-      myRouter.subscribe(appActions.router);
+      router.subscribe(appActions.router);
       subscribe && subscribe(appActions);
     });
   };

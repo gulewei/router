@@ -1,7 +1,7 @@
-import './index.css'
+import './style.css'
 import { app } from "hyperapp"
-import { withRouter } from 'hyperapp-hoa-router'
-import { history, state, actions } from './states'
-import App from './App'
+import { withSubscribe } from './modules/router'
+import { state, actions, subscription } from './store'
+import App from './components/App'
 
-withRouter(app, history)(state, actions, App, document.body)
+withSubscribe(app)(state, actions, App, document.body, subscription)

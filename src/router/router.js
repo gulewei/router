@@ -1,4 +1,8 @@
+import { setGlobalContext } from '../context'
+
 function createRouter (history) {
+  setGlobalContext({ history })
+
   return {
     state: {
       urls: [history.location.pathname],

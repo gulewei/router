@@ -1,5 +1,4 @@
 import { createRouter } from '../router/router'
-import { setGlobalContext } from '../context'
 
 function withSubscribe (app) {
   return function createAppWithSubscription (state, actions, view, rootEl, subscribe) {
@@ -10,14 +9,11 @@ function withSubscribe (app) {
 }
 
 function withRouter (app, history) {
-  setGlobalContext({ history })
-
   return function createAppWithRouter (state, actions, view, rootEl, subscribe) {
-    let router = createRouter(history)
-    // let wraperState = { ...state, router: router.state }
-    // let wraperActions = { ...actions, router: router.actions }
-    state.router = router.state
-    actions.router = router.actions
+    const myRouter = createRouter(history)
+
+    state.router = myRouter.state
+    actions.router = myRouter.actions
 
     return withSubscribe(app)(
       state,
@@ -25,7 +21,7 @@ function withRouter (app, history) {
       view,
       rootEl,
       appActions => {
-        router.subscribe(appActions.router)
+        myRouter.subscribe(appActions.router)
         subscribe && subscribe(appActions)
       }
     )
