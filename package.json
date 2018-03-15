@@ -1,6 +1,6 @@
 {
   "name": "hyperapp-hoa-router",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "another router with hoa function for hyperapp",
   "main": "dist/index.js",
   "scripts": {
