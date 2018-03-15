@@ -6,12 +6,8 @@ const historyConfig = {
   // basename: '/app'
 }
 
-export const history = createHashHistory(historyConfig)
+export const history = window.$history = createHashHistory(historyConfig)
 
-export const state = {
-  page: pageState
-}
+export const state = { page: pageState }
 
-export const actions = {
-  page: pageActions
-}
+export const actions = { page: pageActions }
