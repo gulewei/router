@@ -1,0 +1,19 @@
+* { margin: 0; padding: 0; } 
+
+body, html, 
+.page-container { width: 100%; height: 100%; background-color: #f3f3f3; } 
+
+.animation-page-enter-active { pointer-events: none; animation: pageEnter 10000ms forwards; } 
+@keyframes pageEnter { 
+ from { opacity: 0; transform: translate3d(0, 56px, 0); } 
+ to { opacity: 1; transform: translate3d(0, 0, 0); } 
+ }
+
+.animation-page-leave-active { pointer-events: none; animation: pageLeave 10000ms forwards; } 
+@keyframes pageLeave { 
+ from { opacity: 1; transform: translate3d(0, 0, 0); } 
+ to { opacity: 0; transform: translate3d(0, 56px, 0); } 
+ }
+
+ .animation-page-enter,
+ .animation-page-leave-to { opacity: 0; pointer-events: none; transform: translate3d(0, 56px, 0); } 

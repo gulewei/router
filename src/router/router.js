@@ -1,29 +1,29 @@
-function handleHistory ({ url, actionType }) {
+function modifyUrl ({ newUrl, type }) {
   return state => {
-    switch (actionType) {
+    switch (type) {
       case 'PUSH':
         return {
-          urls: state.urls.concat(url),
-          currentIndex: state.currentIndex += 1
+          urls: state.urls.concat(newUrl),
+          index: state.index += 1
         }
       case 'REPLACE':
         return {
-          urls: state.urls.slice(0, -1).concat(url),
-          currentIndex: state.currentIndex
+          urls: state.urls.slice(0, -1).concat(newUrl),
+          index: state.index
         }
       case 'POP':
-        let popIndex = state.urls.indexOf(url)
+        let popIndex = state.urls.indexOf(newUrl)
 
         if (popIndex < 0) {
           return {
-            urls: [url].concat(state.urls),
-            currentIndex: 0
+            urls: [newUrl].concat(state.urls),
+            index: 0
           }
         }
 
         return {
           urls: state.urls,
-          currentIndex: popIndex
+          index: popIndex
         }
       default:
         return state
@@ -35,14 +35,17 @@ function createRouter (history) {
   return {
     state: {
       urls: [history.location.pathname],
-      currentIndex: 0
+      index: 0
     },
     actions: {
-      handleHistory
+      modifyUrl,
+      callHistoryMethod ({ method, args }) {
+        history[method](...args)
+      }
     },
     subscribe: appActions => history.listen(
-      (location, actionType) => {
-        appActions.handleHistory({ url: location.pathname, actionType })
+      (location, type) => {
+        appActions.modifyUrl({ url: location.pathname, type })
       }
     )
   }

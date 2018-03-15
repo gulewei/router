@@ -4,35 +4,37 @@
 	(factory((global.HoaRouter = {}),global.hyperapp,global.History));
 }(this, (function (exports,hyperapp,history) { 'use strict';
 
-function handleHistory(_ref) {
-  var url = _ref.url,
-      actionType = _ref.actionType;
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function modifyUrl(_ref) {
+  var newUrl = _ref.newUrl,
+      type = _ref.type;
 
   return function (state) {
-    switch (actionType) {
+    switch (type) {
       case 'PUSH':
         return {
-          urls: state.urls.concat(url),
-          currentIndex: state.currentIndex += 1
+          urls: state.urls.concat(newUrl),
+          index: state.index += 1
         };
       case 'REPLACE':
         return {
-          urls: state.urls.slice(0, -1).concat(url),
-          currentIndex: state.currentIndex
+          urls: state.urls.slice(0, -1).concat(newUrl),
+          index: state.index
         };
       case 'POP':
-        var popIndex = state.urls.indexOf(url);
+        var popIndex = state.urls.indexOf(newUrl);
 
         if (popIndex < 0) {
           return {
-            urls: [url].concat(state.urls),
-            currentIndex: 0
+            urls: [newUrl].concat(state.urls),
+            index: 0
           };
         }
 
         return {
           urls: state.urls,
-          currentIndex: popIndex
+          index: popIndex
         };
       default:
         return state;
@@ -44,14 +46,20 @@ function createRouter(history$$1) {
   return {
     state: {
       urls: [history$$1.location.pathname],
-      currentIndex: 0
+      index: 0
     },
     actions: {
-      handleHistory: handleHistory
+      modifyUrl: modifyUrl,
+      callHistoryMethod: function callHistoryMethod(_ref2) {
+        var method = _ref2.method,
+            args = _ref2.args;
+
+        history$$1[method].apply(history$$1, _toConsumableArray(args));
+      }
     },
     subscribe: function subscribe(appActions) {
-      return history$$1.listen(function (location, actionType) {
-        appActions.handleHistory({ url: location.pathname, actionType: actionType });
+      return history$$1.listen(function (location, type) {
+        appActions.modifyUrl({ url: location.pathname, type: type });
       });
     }
   };

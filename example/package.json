@@ -1,0 +1,23 @@
+{
+  "name": "router",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "hyperapp-scripts",
+    "build": "hyperapp-scripts build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hyperapp/router": "^0.4.1",
+    "history": "^4.7.2",
+    "hyperapp": "^1.1.2",
+    "hyperapp-hoa-router": "0.0.4"
+  },
+  "devDependencies": {
+    "cra-hyperapp": "0.0.4",
+    "react-scripts": "^1.1.1"
+  }
+}
