@@ -17,86 +17,43 @@ function setGlobalContext(context) {
   return globalContext;
 }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 function createRouter(history$$1) {
   setGlobalContext({ history: history$$1 });
 
   return {
     state: {
-      urls: [history$$1.location.pathname],
-      index: 0
+      url: ''
     },
     actions: {
-      modifyUrl: function modifyUrl(_ref) {
-        var newUrl = _ref.newUrl,
-            type = _ref.type;
-
-        return function (state) {
-          switch (type) {
-            case 'PUSH':
-              return {
-                urls: state.urls.concat(newUrl),
-                index: state.index += 1
-              };
-            case 'REPLACE':
-              return {
-                urls: state.urls.slice(0, -1).concat(newUrl),
-                index: state.index
-              };
-            case 'POP':
-              var popIndex = state.urls.indexOf(newUrl);
-
-              if (popIndex < 0) {
-                return {
-                  urls: [newUrl].concat(state.urls),
-                  index: 0
-                };
-              }
-
-              return {
-                urls: state.urls,
-                index: popIndex
-              };
-            default:
-              return state;
-          }
-        };
+      modifyUrl: function modifyUrl(url) {
+        return { url: url };
       },
-      callHistoryMethod: function callHistoryMethod(_ref2) {
-        var method = _ref2.method,
-            args = _ref2.args;
-
-        history$$1[method].apply(history$$1, _toConsumableArray(args));
+      push: function push(path) {
+        return history$$1.push(path);
+      },
+      replace: function replace(path) {
+        return history$$1.replace(path);
+      },
+      go: function go(n) {
+        return history$$1.go(n);
       }
     },
     subscribe: function subscribe(actions) {
-      return history$$1.listen(function (location, type) {
-        actions.modifyUrl({ newUrl: location.pathname, type: type });
+      return history$$1.listen(function (location) {
+        actions.modifyUrl(location.pathname);
       });
     }
   };
 }
 
-function withSubscribe(app) {
-  return function createAppWithSubscription(state, actions, view, rootEl, subscribe) {
-    var appActions = app(state, actions, view, rootEl);
-    subscribe && subscribe(appActions);
-    return appActions;
-  };
-}
-
 function withRouter(app, history$$1) {
-  return function createAppWithRouter(state, actions, view, rootEl, subscribe) {
-    var myRouter = createRouter(history$$1);
-
+  var myRouter = createRouter(history$$1);
+  return function createAppWithRouter(state, actions, view, rootEl) {
     state.router = myRouter.state;
     actions.router = myRouter.actions;
-
-    return withSubscribe(app)(state, actions, view, rootEl, function (appActions) {
-      myRouter.subscribe(appActions.router);
-      subscribe && subscribe(appActions);
-    });
+    var appActions = app(state, actions, view, rootEl);
+    myRouter.subscribe(appActions.router);
+    return appActions;
   };
 }
 
@@ -235,7 +192,6 @@ function Redirect(props) {
 }
 
 exports.withRouter = withRouter;
-exports.withSubscribe = withSubscribe;
 exports.createRouter = createRouter;
 exports.Route = Route;
 exports.Link = Link;

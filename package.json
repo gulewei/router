@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "rollup -c",
-    "pub": "rollup -c && npm version patch && npm publish"
+    "prepub": "rollup -c && npm version patch"
   },
   "repository": {
     "type": "git",
