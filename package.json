@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "another router with hoa function for hyperapp",
   "main": "dist/index.js",
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c",
     "pub": "rollup -c && npm version patch && npm publish"
