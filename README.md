@@ -30,13 +30,21 @@ const unsubscribe = myRouter.subscrbe(appActions.router)
 
 - **actions**: { modifyUrl, callHistoryMethod }
 
-  - **modifyUrl**: ({url: string, type: string}) => state
+  - **modifyUrl**: (url: string) => state
 
     Modify state when location change, and trigger view update. 
   
-  - **callHistoryMethod**: ({method: string, args: any[]}) => void
+  - **push**: (path: string) => void
 
-    Change location by call a *history* method.
+    Change location by call *history.push*.
+
+  - **replace**: (path: string) => void
+
+  Change location by call *history.replace*.
+
+  - **go**: (n: number) => void
+
+  Change location by call *history.go* method.
   
 
 ## HOA Function
@@ -56,16 +64,13 @@ withRouter(app, history)(
   {}, 
   {}, 
   view, 
-  document.body,
-  anySubScriptions
+  document.body
   )
 ```
 
-- **withRouter**: (app, history) => (state, actions, view, el, subscriptions) => appActions
+- **withRouter**: (app, history) => (state, actions, view, el) => appActions
 
   Automatically handle router for you
-
-- **withSubscribe**: (app) => (state, actions, view, el, subscriptions) => appActions
 
 ## Components
 
