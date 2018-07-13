@@ -1,5 +1,5 @@
 import { h } from 'hyperapp'
-import { Route, Switch, Link } from 'hyperapp-hoa-router'
+import { Route, Switch, Link } from '../../src'
 import { BackButton, LinkWithBlock } from './Links'
 import Page from './Page'
 

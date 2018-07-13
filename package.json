@@ -26,9 +26,9 @@
     "url": "https://github.com/venecy/router/issues"
   },
   "homepage": "https://github.com/venecy/router#readme",
-  "dependencies": {
+  "peerDependencies": {
     "history": "^4.7.2",
-    "hyperapp": "^1.1.2"
+    "hyperapp": "^1.2.6"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

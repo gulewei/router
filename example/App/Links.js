@@ -1,6 +1,6 @@
 import { h } from 'hyperapp'
 import { history } from '../store'
-import { Link } from 'hyperapp-hoa-router'
+import { Link } from '../../src'
 
 const BackButton = () => (
   <button class='back-button' onclick={() => history.goBack()}>back</button>

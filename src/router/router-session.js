@@ -10,18 +10,22 @@ const MySession = {
   }
 }
 
-function createRouterWithSession (history) {
+function createRouterWithSession (history, moduleName = 'location') {
   setGlobalContext({ history })
 
   return {
+    moduleName,
     state: {
-      url: MySession.read()
+      pathname: '',
+      previous: ''
     },
     actions: {
-      modifyUrl: (url) => ({ url }),
-      push: (path) => history.push(path),
-      replace: (path) => history.replace(path),
-      go: (n) => history.go(n)
+      modifyUrl: (pathname) => (state) => { 
+        return {
+          pathname,
+          previous: state.pathname
+        }
+      }
     },
     subscribe: actions => history.listen(
       (location) => {

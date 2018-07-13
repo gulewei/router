@@ -1,17 +1,21 @@
 import { setGlobalContext } from '../context'
 
-function createRouter (history) {
+function createRouter (history, moduleName = 'location') {
   setGlobalContext({ history })
 
   return {
+    moduleName,
     state: {
-      url: ''
+      pathname: '',
+      previous: ''
     },
     actions: {
-      modifyUrl: (url) => ({ url }),
-      push: (path) => history.push(path),
-      replace: (path) => history.replace(path),
-      go: (n) => history.go(n)
+      modifyUrl: (pathname) => (state) => { 
+        return {
+          pathname,
+          previous: state.pathname
+        }
+      }
     },
     subscribe: actions => history.listen(
       (location) => {

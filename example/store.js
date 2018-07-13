@@ -1,5 +1,5 @@
 import { createHashHistory } from 'history'
-import { createRouter } from 'hyperapp-hoa-router'
+import { createRouter } from '../src'
 
 export const history = window.$history = createHashHistory({ hashType: 'hashbang' })
 
