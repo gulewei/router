@@ -1,4 +1,4 @@
-function createMatch(isExact, path, url, params) {
+function createMatch (isExact, path, url, params) {
   return {
     isExact: isExact,
     path: path,
@@ -7,12 +7,20 @@ function createMatch(isExact, path, url, params) {
   }
 }
 
-function trimTrailingSlash(url) {
-  for (var len = url.length; "/" === url[--len]; );
+function trimTrailingSlash (url) {
+  for (var len = url.length; "/" === url[--len];);
   return url.slice(0, len + 1)
 }
 
-export function parseRoute(path, url, options) {
+function decodeParam (val) {
+  try {
+    return decodeURIComponent(val)
+  } catch (e) {
+    return val
+  }
+}
+
+export function parseRoute (path, url, options) {
   if (path === url || !path) {
     return createMatch(path === url, path, url)
   }
@@ -25,14 +33,9 @@ export function parseRoute(path, url, options) {
     return
   }
 
-  // eslint-disable-next-line
   for (var i = 0, params = {}, len = paths.length, url = ""; i < len; i++) {
     if (":" === paths[i][0]) {
-      try {
-        params[paths[i].slice(1)] = urls[i] = decodeURI(urls[i])
-      } catch (_) {
-        continue
-      }
+      params[paths[i].slice(1)] = urls[i] = decodeParam(urls[i])
     } else if (paths[i] !== urls[i]) {
       return
     }
