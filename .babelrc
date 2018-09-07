@@ -1,10 +1,7 @@
 {
   "presets": [
     [
-      "es2015",
-      {
-        "modules": false
-      }
+      "env"
     ]
   ],
   "plugins": [
@@ -14,6 +11,6 @@
         "pragma": "h"
       }
     ],
-    "transform-object-rest-spread"
+    "transform-runtime"
   ]
 }

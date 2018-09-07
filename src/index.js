@@ -10,13 +10,13 @@ import {
 
 function withRouter (app, name = 'router', config) {
   return (state, actions, view, root) => {
-    const pathFn = (state) => state[name]
+    initPathFn((state) => state[name])
 
     const {
       subscribe,
       state: routerState,
       actions: routerActions
-    } = routerFactory({ ...config, pathFn })
+    } = routerFactory(config)
 
     state[name] = routerState
     actions[name] = routerActions
