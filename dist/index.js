@@ -1,61 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('hyperapp'), require('history')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'hyperapp', 'history'], factory) :
-	(factory((global.HoaRouter = {}),global.hyperapp,global.History));
-}(this, (function (exports,hyperapp,history) { 'use strict';
-
-var globalContext = {
-  history: {}
-};
-
-function getGlobalContext() {
-  return globalContext;
-}
-
-function setGlobalContext(context) {
-  globalContext.history = context.history;
-  return globalContext;
-}
-
-function createRouter(history$$1) {
-  setGlobalContext({ history: history$$1 });
-
-  return {
-    state: {
-      url: ''
-    },
-    actions: {
-      modifyUrl: function modifyUrl(url) {
-        return { url: url };
-      },
-      push: function push(path) {
-        return history$$1.push(path);
-      },
-      replace: function replace(path) {
-        return history$$1.replace(path);
-      },
-      go: function go(n) {
-        return history$$1.go(n);
-      }
-    },
-    subscribe: function subscribe(actions) {
-      return history$$1.listen(function (location) {
-        actions.modifyUrl(location.pathname);
-      });
-    }
-  };
-}
-
-function withRouter(app, history$$1) {
-  var myRouter = createRouter(history$$1);
-  return function createAppWithRouter(state, actions, view, rootEl) {
-    state.router = myRouter.state;
-    actions.router = myRouter.actions;
-    var appActions = app(state, actions, view, rootEl);
-    myRouter.subscribe(appActions.router);
-    return appActions;
-  };
-}
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('hyperapp')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'hyperapp'], factory) :
+	(factory((global.HoaRouter = {}),global.hyperapp));
+}(this, (function (exports,hyperapp) { 'use strict';
 
 function createMatch(isExact, path, url, params) {
   return {
@@ -71,6 +18,14 @@ function trimTrailingSlash(url) {
   return url.slice(0, len + 1);
 }
 
+function decodeParam(val) {
+  try {
+    return decodeURIComponent(val);
+  } catch (e) {
+    return val;
+  }
+}
+
 function parseRoute(path, url, options) {
   if (path === url || !path) {
     return createMatch(path === url, path, url);
@@ -84,14 +39,9 @@ function parseRoute(path, url, options) {
     return;
   }
 
-  // eslint-disable-next-line
   for (var i = 0, params = {}, len = paths.length, url = ""; i < len; i++) {
     if (":" === paths[i][0]) {
-      try {
-        params[paths[i].slice(1)] = urls[i] = decodeURI(urls[i]);
-      } catch (_) {
-        continue;
-      }
+      params[paths[i].slice(1)] = urls[i] = decodeParam(urls[i]);
     } else if (paths[i] !== urls[i]) {
       return;
     }
@@ -101,102 +51,194 @@ function parseRoute(path, url, options) {
   return createMatch(false, path, url.slice(0, -1), params);
 }
 
-function Route(props) {
-  var _getGlobalContext = getGlobalContext(),
-      history$$1 = _getGlobalContext.history;
+// ==== Factory ======
 
-  var loc = props.location || history$$1.location;
-  var match = parseRoute(props.path, loc.pathname, {
-    exact: !props.parent
-  });
+var pathOf = void 0;
+var hook = function hook() {};
 
-  return match && props.render({
-    match: match,
-    location: loc
-  });
+function initPathFn(pathFn) {
+  if (!pathOf) {
+    pathOf = pathFn;
+  }
 }
 
-var isModifiedEvent = function isModifiedEvent(event) {
-  return !!(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
-};
+function routerFactory(_ref) {
+  var pathFn = _ref.pathFn,
+      history = _ref.history,
+      state = _ref.state,
+      _ref$beforeChange = _ref.beforeChange,
+      beforeChange = _ref$beforeChange === undefined ? hook : _ref$beforeChange,
+      _ref$afterChange = _ref.afterChange,
+      afterChange = _ref$afterChange === undefined ? hook : _ref$afterChange;
 
-/**
- * @typedef {Object} LinkProps
- * @prop {string | Object} to
- * @prop {boolean} [replace=false]
- * @param {LinkProps} props 
- * @param {JSX.Element[]} children 
- */
-function Link(props, children) {
-  var replace = props.replace,
-      to = props.to,
-      onclick = props.onclick;
+  initPathFn(pathFn);
 
-  var _getGlobalContext = getGlobalContext(),
-      history$$1 = _getGlobalContext.history;
+  var path = history.location.pathname;
 
-  var loc = typeof to === "string" ? history.createLocation(to, null, null, history$$1.location) : to;
-
-  props.href = history$$1.createHref(loc);
-  props.onclick = function (e) {
-    if (onclick) {
-      onclick(e);
+  var actions = {
+    push: function push(path) {
+      history.push(path);
+    },
+    replace: function replace(path) {
+      history.replace(path);
+    },
+    onChange: function onChange(_ref2) {
+      var location = _ref2.location,
+          action = _ref2.action;
+      return function (state) {
+        return nextState(location.pathname, state.pathname, action, state.sessions);
+      };
     }
-
-    if (!e.defaultPrevented && // onClick prevented default
-    e.button === 0 && // ignore everything but left clicks
-    !props.target && // let browser handle "target=_blank" etc.
-    !isModifiedEvent(e) // ignore clicks with modifier keys
-    ) {
-        e.preventDefault();
-
-        if (replace) {
-          history$$1.replace(to);
-        } else {
-          history$$1.push(to);
-        }
-      }
   };
 
-  return hyperapp.h("a", props, children);
+  var subscribe = function subscribe(actions) {
+    history.listen(function (location, ACTION) {
+      if (!beforeChange(actions, pathOf, history)) {
+        pathOf(actions).onChange({ location: location, action: ACTION });
+        afterChange(actions, pathOf, history);
+      }
+    });
+    return actions;
+  };
+
+  return {
+    state: state || stateFactory(path, path, [path], enmuDirection.none),
+    actions: actions,
+    subscribe: subscribe
+  };
 }
 
-/**
- * TODO: support Redirect 
- * @param {*} props 
- * @param {*} children 
- */
+var enmuDirection = {
+  backward: 0,
+  forward: 1,
+  none: 2
+};
+
+var stateFactory = function stateFactory(pathname, previous, sessions, direction) {
+  return { pathname: pathname, previous: previous, sessions: sessions, direction: direction };
+};
+
+var nextState = function nextState(pathname, previous, action, sessions) {
+  var contained = sessions.indexOf(pathname) > -1;
+  var direction = { POP: 0, PUSH: 1, REPLACE: 2 }[action] + (contained ? 0 : 1);
+  var forward = function forward() {
+    return sessions.concat(pathname);
+  };
+  var backward = function backward() {
+    return sessions.slice(0, -1);
+  };
+  var none = function none() {
+    return sessions.slice(0, -1).concat(pathname);
+  };
+  sessions = [backward, forward, none][direction]();
+  return stateFactory(pathname, previous, sessions, direction);
+};
+
+// ==== components ======
+
 
 function Switch(props, children) {
-  var i = 0;
-  while (!children[i] && i < children.length) {
-    i++;
-  }return children[i];
+  return function (state, actions) {
+    var child,
+        i = 0;
+    while (!(child = children[i] && children[i](state, actions)) && i < children.length) {
+      i++;
+    }return child;
+  };
+}
+
+function Route(props) {
+  return function (state, actions) {
+    var state = pathOf(state);
+    var match = parseRoute(props.path, state.pathname, {
+      exact: !props.parent
+    });
+
+    return match && props.render({
+      match: match,
+      state: state
+    });
+  };
+}
+
+function Redirect(props) {
+  return function (state, actions) {
+    pathOf(actions).replace(props.to);
+  };
 }
 
 /**
- * TODO: add a [from] prop which can be used in Switch
- * @typedef {Object} RedirectProps
- * @prop {string | Object} to
- * @prop {boolean} [push=false]
- * @param {RedirectProps} props 
+ *
+ * @param {Location | HTMLAnchorElement} loc 
  */
-function Redirect(props) {
-  var _getGlobalContext = getGlobalContext(),
-      history$$1 = _getGlobalContext.history;
+function getOrigin(loc) {
+  return loc.protocol + "//" + loc.hostname + (loc.port ? ":" + loc.port : "");
+}
 
-  var to = props.to,
-      push = props.push;
+/**
+ *
+ * @param {HTMLAnchorElement} anchorElement 
+ */
+function isExternal(anchorElement) {
+  // Location.origin and HTMLAnchorElement.origin are not supported by IE and Safari.
+  return getOrigin(window.location) !== getOrigin(anchorElement);
+}
 
-  push ? history$$1.push(to) : history$$1.replace(to);
+function Link(props, children) {
+  return function (state, actions) {
+    var to = props.to;
+    var onclick = props.onclick;
+    delete props.to;
+    delete props.location;
+
+    props.href = to;
+    props.onclick = function (e) {
+      if (onclick) {
+        onclick(e);
+      }
+      if (e.defaultPrevented || e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || props.target === "_blank" || isExternal(e.currentTarget)) {} else {
+        e.preventDefault();
+
+        if (to !== pathOf(state).pathname) {
+          pathOf(actions).push(to);
+        }
+      }
+    };
+
+    return hyperapp.h("a", props, children);
+  };
+}
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function withRouter(app) {
+  var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'router';
+  var config = arguments[2];
+
+  return function (state, actions, view, root) {
+    var pathFn = function pathFn(state) {
+      return state[name];
+    };
+
+    var _routerFactory = routerFactory(_extends({}, config, { pathFn: pathFn })),
+        subscribe = _routerFactory.subscribe,
+        routerState = _routerFactory.state,
+        routerActions = _routerFactory.actions;
+
+    return subscribe(app(_extends({}, state, _defineProperty({}, name, routerState)), _extends({}, actions, _defineProperty({}, name, routerActions)), view, root));
+  };
 }
 
 exports.withRouter = withRouter;
-exports.createRouter = createRouter;
-exports.Route = Route;
-exports.Link = Link;
+exports.initPathFn = initPathFn;
+exports.routerFactory = routerFactory;
+exports.enmuDirection = enmuDirection;
 exports.Switch = Switch;
+exports.Route = Route;
 exports.Redirect = Redirect;
+exports.Link = Link;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

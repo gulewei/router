@@ -18,13 +18,11 @@ function withRouter (app, name = 'router', config) {
       actions: routerActions
     } = routerFactory({ ...config, pathFn })
 
+    state[name] = routerState
+    actions[name] = routerActions
+
     return subscribe(
-      app(
-        { ...state, [name]: routerState },
-        { ...actions, [name]: routerActions },
-        view,
-        root
-      )
+      app(state, actions, view, root)
     )
   }
 }
