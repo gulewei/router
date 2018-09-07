@@ -2,25 +2,38 @@ export as namespace HoaRouter
 
 import { History } from 'history'
 
+export function withRouter (
+  app: Function, 
+  name: string, 
+  config: FactoryOptions
+): (state, actions, view: Function, el: HTMLElement) => Object
+
 export function initPathFn (pathFn: PathFn): void
-export function routerFactory (
-  pathFn: PathFn,
-  history: History,
+
+export function routerFactory (config: FactoryOptions): {
   state: RouterState,
-  beforeChange: RouterChangeHook,
-  afterChange: RouterChangeHook
-): {
-    state: RouterState,
-    actions: RouterActions,
-    subscribe: (actions: Object) => Object
-  }
+  actions: RouterActions,
+  subscribe: (actions: Object) => Object
+}
+
 export const Switch: (props: Object, children: Function[]) => JSX.Element
+
 export const Route: (props: RouteProps) => JSX.Element
+
 export const Redirect: (props: { to: string }) => JSX.Element
+
 export const Link: (props: { to: string }, children: any[]) => JSX.Element
 
 
 type PathFn = (state: Object) => any
+
+export interface FactoryOptions {
+  pathFn: PathFn,
+  history: History,
+  state?: RouterState,
+  beforeChange?: RouterChangeHook,
+  afterChange?: RouterChangeHook
+}
 
 export enum EnumDirection {
   backward = 0,
