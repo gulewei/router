@@ -110,7 +110,7 @@ function parseRoute(path, url, options) {
 }
 
 function Route(props) {
-  return function (state) {
+  return function (state, actions) {
     var state = exports.pathOf(state);
     var match = parseRoute(props.path, state.pathname, {
       exact: !props.parent
@@ -149,7 +149,7 @@ function routerFactory(history) {
     }
   };
 
-  var subscribe = function subscribe(main) {
+  var sub = function sub(main) {
     return history.listen(function (location) {
       exports.pathOf(main).onChange({ location: location });
     });
@@ -158,59 +158,11 @@ function routerFactory(history) {
   return {
     state: state,
     actions: actions,
-    subscribe: subscribe
+    sub: sub
   };
 }
 
-var SESSION_KEY = '_hoa_router_session';
-var store = window.sessionStorage;
-var getSession = function getSession(key) {
-  return JSON.parse(store.getItem(key));
-};
-var setSession = function setSession(key, val) {
-  return store.setItem(key, JSON.stringify(val));
-};
-
-function sessionFactory(history) {
-  var sessionKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SESSION_KEY;
-
-  return {
-    state: {
-      stack: getSession(sessionKey) || [history.location]
-    },
-    actions: {
-      onSessionChange: function onSessionChange(_ref) {
-        var location = _ref.location,
-            action = _ref.action;
-        return function (_ref2) {
-          var stack = _ref2.stack;
-
-          var nextStack = void 0;
-          switch (action) {
-            case 'PUSH':
-              nextStack = stack.concat(location);
-              break;
-            case 'REPLACE':
-              nextStack = stack.slice(0, -1).concat(location);
-              break;
-            case 'POP':
-            default:
-              nextStack = stack;
-          }
-          setSession(sessionKey, nextStack);
-          return { stack: nextStack };
-        };
-      }
-    },
-    subscribe: function subscribe(main) {
-      return history.listen(function (location, action) {
-        exports.pathOf(main).onSessionChange({ location: location, action: action });
-      });
-    }
-  };
-}
-
-function Switch(children) {
+function Switch(props, children) {
   return function (state, actions) {
     var child,
         i = 0;
@@ -220,28 +172,132 @@ function Switch(children) {
   };
 }
 
-var NAME = 'router';
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
 
-function withRouter(app, _ref) {
-    var _ref$name = _ref.name,
-        name = _ref$name === undefined ? NAME : _ref$name,
-        history = _ref.history;
+  function AsyncGenerator(gen) {
+    var front, back;
 
-    return function appWraper(state, actions, view, root) {
-        initPathFn(name);
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
 
-        var router = routerFactory(history);
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
+    }
 
-        state[name] = router.state;
-        actions[name] = router.actions;
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
 
-        var main = app(state, actions, view, root);
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
 
-        router.subscribe(main);
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
 
-        return main;
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
     };
-}
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 var _extends = Object.assign || function (target) {
   for (var i = 1; i < arguments.length; i++) {
@@ -257,29 +313,56 @@ var _extends = Object.assign || function (target) {
   return target;
 };
 
-var NAME$1 = 'router';
+/**
+ * @param {{state: Object, actions: Object, subscribe: () => Function}[]} factories
+ */
+function combineFactories(factories) {
+  return factories.reduce(function (_ref, _ref2) {
+    var prevState = _ref.state,
+        prevActions = _ref.actions,
+        subscribes = _ref.subscribes;
+    var state = _ref2.state,
+        actions = _ref2.actions,
+        subscribe = _ref2.subscribe;
 
-function withSession(app, _ref) {
-    var _ref$name = _ref.name,
-        name = _ref$name === undefined ? NAME$1 : _ref$name,
-        history = _ref.history;
-
-    return function appWraper(state, actions, view, root) {
-        initPathFn(name);
-
-        var router = routerFactory(history);
-        var session = sessionFactory(history);
-
-        state[name] = _extends({}, router.state, session.state);
-        actions[name] = _extends({}, router.actions, session.actions);
-
-        var main = app(state, actions, view, root);
-
-        router.subscribe(main);
-        session.subscribe(main);
-
-        return main;
+    return {
+      state: _extends({}, prevState, state),
+      actions: _extends({}, prevActions, actions),
+      subscribes: subscribes.concat(subscribe)
     };
+  }, { state: {}, actions: {}, subscribes: [] });
+}
+
+var NAME = 'router';
+
+function withRouter(app, _ref3) {
+  var _ref3$moduleName = _ref3.moduleName,
+      moduleName = _ref3$moduleName === undefined ? NAME : _ref3$moduleName,
+      _ref3$unSubName = _ref3.unSubName,
+      unSubName = _ref3$unSubName === undefined ? 'unSubAll' : _ref3$unSubName,
+      _ref3$factories = _ref3.factories,
+      factories = _ref3$factories === undefined ? [] : _ref3$factories;
+
+  return function appWraper(state, actions, view, root) {
+    initPathFn(moduleName);
+
+    var factory = combineFactories(factories);
+    state[moduleName] = factory.state;
+    actions[moduleName] = factory.actions;
+
+    var main = app(state, actions, view, root);
+    var unSubs = factory.subscribes.map(function (sub) {
+      return sub(main);
+    });
+
+    main[unSubName] = function () {
+      return unSubs.map(function (unSub) {
+        return unSub();
+      });
+    };
+
+    return main;
+  };
 }
 
 exports.Link = Link;
@@ -287,10 +370,8 @@ exports.init = initPathFn;
 exports.Redirect = Redirect;
 exports.Route = Route;
 exports.routerFactory = routerFactory;
-exports.sessionFactory = sessionFactory;
 exports.Switch = Switch;
 exports.withRouter = withRouter;
-exports.withSession = withSession;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
