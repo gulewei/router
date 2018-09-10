@@ -1,6 +1,7 @@
 export as namespace HoaRouter
 
 import { History, Location, Action } from 'history'
+import { View } from 'hyperapp'
 
 // === init ===
 
@@ -61,13 +62,13 @@ export function sessionFactory (history: History, sessionKey?: string): {
 // === component ===
 
 
-export const Switch: (props: Object, children: Function[]) => JSX.Element
+export const Switch: (props: Object, children: Function[]) => View<any, any>
 
-export const Route: (props: RouteProps) => JSX.Element
+export const Route: (props: RouteProps) => View<any, any>
 
-export const Redirect: (props: { to: string }) => JSX.Element
+export const Redirect: (props: { to: string }) => View<any, any>
 
-export const Link: (props: { to: string }, children: any[]) => JSX.Element
+export const Link: (props: { to: string }, children: any[]) => View<any, any>
 
 export interface RouteProps {
   parent?: boolean,
