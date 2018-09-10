@@ -1,10 +1,12 @@
 import { h } from 'hyperapp'
+import _Page from '@gulw/components/lib/page'
+import '@gulw/components/lib/page/style'
 
 const Page = ({ key }, children) => {
   return (
-    <div class={`page page-${key}`} key={key}>
-      <div class="page-inner">{children}</div>
-    </div>
+    <_Page key={key}>
+      {children}
+    </_Page>
   )
 }
 

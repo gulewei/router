@@ -1,13 +1,13 @@
 import './style.css'
 import { app } from 'hyperapp'
-import { history } from './store'
-import { withSession } from '../src'
+import { factories } from './router'
+import { withRouter } from '../src'
 import App from './App/App'
 
 const config = {
-  history,
-  name: 'my',
-  sessionKey: '_my_session_key_'
+  moduleName: 'my',
+  unSubName: 'destroyRouter',
+  factories
 }
 
-withSession(app, config)({}, {}, App, document.body)
+withRouter(app, config)({}, {}, App, document.body)

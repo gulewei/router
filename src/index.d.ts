@@ -18,26 +18,24 @@ export function withRouter (
   config: HoaConfig
 ): (state, actions, view: Function, el: HTMLElement) => Object
 
-export function withSession (
-  app: Function,
-  config: HoaConfig
-): (state, actions, view: Function, el: HTMLElement) => Object
-
 type HoaConfig = {
-  history: History,
-  name?: string,
-  sessionKey?: string
+  moduleName?: string,
+  unSubName?: string,
+  factories: Factory
 }
+
 
 
 // === factory ===
 
 
-export function routerFactory (history: History): {
-  state: RouterState,
-  actions: RouterActions,
+export interface Factory<State = Object, Actions = Object> {
+  state: State,
+  actions: Actions,
   subscribe: (main: Object) => () => void
 }
+
+export function routerFactory (history: History): Factory<RouterState, RouterActions>
 
 export interface RouterState {
   pathname: string
@@ -50,12 +48,14 @@ export interface RouterActions {
   onChange: (data: { location: Location, action: Action }) => RouterState
 }
 
-export function sessionFactory (history: History, sessionKey?: string): {
-  state: { stack: Location[] },
-  actions: {
-    onSessionChange: (data: { location: Location, action: Action }) => { stack: Location[] }
-  },
-  subscibe: (main: Object) => () => void
+export function sessionFactory (history: History, sessionKey?: string): Factory<SessionState, SessionActions>
+
+export interface SessionState {
+  stack: Location[]
+}
+
+export interface SessionActions {
+  onSessionChange: (data: { location: Location, action: Action }) => { stack: Location[] }
 }
 
 

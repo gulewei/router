@@ -1,5 +1,5 @@
 import { h } from 'hyperapp'
-import { history } from '../store'
+import { history } from '../router'
 import { Link } from '../../src'
 
 const BackButton = () => (
