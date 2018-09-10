@@ -1,4 +1,3 @@
-import './style.css'
 import { app } from 'hyperapp'
 import { factories } from './router'
 import { withRouter } from '../src'

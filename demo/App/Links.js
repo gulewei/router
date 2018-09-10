@@ -1,6 +1,22 @@
 import { h } from 'hyperapp'
 import { history } from '../router'
-import { Link } from '../../src'
+import { Link, pathOf } from '../../src'
+
+const HomeLink = () => (state) => {
+  return (
+    <a
+      class='page-link'
+      onclick={() => {
+        const stack = pathOf(state).stack.map(loc => loc.pathname)
+        history.go(
+          stack.indexOf('/') - stack.indexOf(history.location.pathname)
+        )
+      }}
+    >
+      Back home
+  </a>
+  )
+}
 
 const BackButton = () => (
   <button class='back-button' onclick={() => history.goBack()}>back</button>
@@ -17,6 +33,7 @@ const LinkWithBlock = () => {
 }
 
 export {
+  HomeLink,
   BackButton,
   LinkWithBlock
 }

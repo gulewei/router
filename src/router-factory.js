@@ -21,7 +21,7 @@ function routerFactory (history) {
     }
   }
 
-  const subscribe = (main) => {
+  const sub = (main) => {
     return history.listen((location) => {
       pathOf(main).onChange({ location })
     })
@@ -30,7 +30,7 @@ function routerFactory (history) {
   return {
     state,
     actions,
-    subscribe
+    sub
   }
 }
 
