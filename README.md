@@ -1,21 +1,41 @@
 ## A Hyperapp Router
 
+## [Demo](https://venecy.github.io/router/demo/)
+
 ## Quick Start
 
 ```js
-import { app, h } from 'hyperapp'
+import { app } from 'hyperapp'
 import { createHashHistory } from 'history'
-import { withRouter } from 'hyperapp-hoa-router'
+import { withRouter, routerFactory } from 'hyperapp-hoa-router'
 import App from './components/App'
 
 const history = createHashHistory()
 
 const config = {
-  history,
-  name: 'router'
+  factories: [routerFactory(history)]
 }
 
 withRouter(app, config)({}, {}, App, document.body)
+```
+
+or
+
+```js
+import { app } from 'hyperapp'
+import { createHashHistory } from 'history'
+import { init, routerFactory } from 'hyperapp-hoa-router'
+import App from './App'
+
+init('router')
+const router = routerFactory(createHashHistory())
+const main = app(
+  { router: router.state },
+  { router: router.actions },
+  App,
+  document.body
+)
+router.sub(main)
 ```
 
 

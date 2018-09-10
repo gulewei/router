@@ -1,7 +1,7 @@
 import { createHashHistory } from 'history'
 import { routerFactory, sessionFactory } from '../src'
 
-export const history = window.$history = createHashHistory({ hashType: 'hashbang' })
+export const history = createHashHistory({ hashType: 'hashbang' })
 
 window.$history = history
 
