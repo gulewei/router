@@ -1,244 +1,422 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('hyperapp')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'hyperapp'], factory) :
-  (factory((global.HoaRouter = {}),global.hyperapp));
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('hyperapp')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'hyperapp'], factory) :
+	(factory((global.HoaRouter = {}),global.hyperapp));
 }(this, (function (exports,hyperapp) { 'use strict';
 
-  function createMatch(isExact, path, url, params) {
-    return {
-      isExact: isExact,
-      path: path,
-      url: url,
-      params: params
+exports.pathOf = void 0;
+
+function initPathFn(name) {
+  if (!exports.pathOf) {
+    exports.pathOf = function pathOf(s) {
+      return s[name];
     };
   }
+}
 
-  function trimTrailingSlash(url) {
-    for (var len = url.length; "/" === url[--len];) {}
-    return url.slice(0, len + 1);
+function Link(props, children) {
+  return function (state, actions) {
+    var to = props.to;
+    var onclick = props.onclick;
+    delete props.to;
+    delete props.location;
+
+    props.href = to;
+    props.onclick = function (e) {
+      if (onclick) {
+        onclick(e);
+      }
+      if (e.defaultPrevented || e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || props.target === "_blank" || isExternal(e.currentTarget)) {} else {
+        e.preventDefault();
+
+        if (to !== exports.pathOf(state).pathname) {
+          exports.pathOf(actions).push(to);
+        }
+      }
+    };
+
+    return hyperapp.h("a", props, children);
+  };
+}
+
+/**
+ *
+ * @param {Location | HTMLAnchorElement} loc 
+ */
+function getOrigin(loc) {
+  return loc.protocol + "//" + loc.hostname + (loc.port ? ":" + loc.port : "");
+}
+
+/**
+ *
+ * @param {HTMLAnchorElement} anchorElement 
+ */
+function isExternal(anchorElement) {
+  // Location.origin and HTMLAnchorElement.origin are not supported by IE and Safari.
+  return getOrigin(window.location) !== getOrigin(anchorElement);
+}
+
+function Redirect(props) {
+  return function (state, actions) {
+    exports.pathOf(actions).replace(props.to);
+  };
+}
+
+function createMatch(isExact, path, url, params) {
+  return {
+    isExact: isExact,
+    path: path,
+    url: url,
+    params: params
+  };
+}
+
+function trimTrailingSlash(url) {
+  for (var len = url.length; "/" === url[--len];) {}
+  return url.slice(0, len + 1);
+}
+
+function decodeParam(val) {
+  try {
+    return decodeURIComponent(val);
+  } catch (e) {
+    return val;
+  }
+}
+
+function parseRoute(path, url, options) {
+  if (path === url || !path) {
+    return createMatch(path === url, path, url);
   }
 
-  function decodeParam(val) {
-    try {
-      return decodeURIComponent(val);
-    } catch (e) {
-      return val;
-    }
+  var exact = options && options.exact;
+  var paths = trimTrailingSlash(path).split("/");
+  var urls = trimTrailingSlash(url).split("/");
+
+  if (paths.length > urls.length || exact && paths.length < urls.length) {
+    return;
   }
 
-  function parseRoute(path, url, options) {
-    if (path === url || !path) {
-      return createMatch(path === url, path, url);
-    }
-
-    var exact = options && options.exact;
-    var paths = trimTrailingSlash(path).split("/");
-    var urls = trimTrailingSlash(url).split("/");
-
-    if (paths.length > urls.length || exact && paths.length < urls.length) {
+  for (var i = 0, params = {}, len = paths.length, url = ""; i < len; i++) {
+    if (":" === paths[i][0]) {
+      params[paths[i].slice(1)] = urls[i] = decodeParam(urls[i]);
+    } else if (paths[i] !== urls[i]) {
       return;
     }
-
-    for (var i = 0, params = {}, len = paths.length, url = ""; i < len; i++) {
-      if (":" === paths[i][0]) {
-        params[paths[i].slice(1)] = urls[i] = decodeParam(urls[i]);
-      } else if (paths[i] !== urls[i]) {
-        return;
-      }
-      url += urls[i] + "/";
-    }
-
-    return createMatch(false, path, url.slice(0, -1), params);
+    url += urls[i] + "/";
   }
 
-  // ==== Factory ======
+  return createMatch(false, path, url.slice(0, -1), params);
+}
 
-  var pathOf = void 0;
-  var hook = function hook() {};
+function Route(props) {
+  return function (state, actions) {
+    var state = exports.pathOf(state);
+    var match = parseRoute(props.path, state.pathname, {
+      exact: !props.parent
+    });
 
-  function initPathFn(pathFn) {
-    if (!pathOf) {
-      pathOf = pathFn;
+    return match && props.render({
+      match: match,
+      state: state
+    });
+  };
+}
+
+function routerFactory(history) {
+  var state = {
+    pathname: history.location.pathname,
+    previous: null
+  };
+
+  var actions = {
+    push: function push(path) {
+      history.push(path);
+    },
+    replace: function replace(path) {
+      history.replace(path);
+    },
+    onChange: function onChange(_ref) {
+      var location = _ref.location;
+      return function (_ref2) {
+        var previous = _ref2.pathname;
+
+        return {
+          pathname: location.pathname,
+          previous: previous
+        };
+      };
     }
-  }
+  };
 
-  function routerFactory(_ref) {
-    var pathFn = _ref.pathFn,
-        history = _ref.history,
-        state = _ref.state,
-        _ref$beforeChange = _ref.beforeChange,
-        beforeChange = _ref$beforeChange === undefined ? hook : _ref$beforeChange,
-        _ref$afterChange = _ref.afterChange,
-        afterChange = _ref$afterChange === undefined ? hook : _ref$afterChange;
+  var subscribe = function subscribe(main) {
+    return history.listen(function (location) {
+      exports.pathOf(main).onChange({ location: location });
+    });
+  };
 
-    initPathFn(pathFn);
+  return {
+    state: state,
+    actions: actions,
+    subscribe: subscribe
+  };
+}
 
-    var path = history.location.pathname;
+var SESSION_KEY = '_hoa_router_session';
+var store = window.sessionStorage;
+var getSession = function getSession(key) {
+  return JSON.parse(store.getItem(key));
+};
+var setSession = function setSession(key, val) {
+  return store.setItem(key, JSON.stringify(val));
+};
 
-    var actions = {
-      push: function push(path) {
-        history.push(path);
-      },
-      replace: function replace(path) {
-        history.replace(path);
-      },
-      onChange: function onChange(_ref2) {
-        var location = _ref2.location,
-            action = _ref2.action;
-        return function (state) {
-          return nextState(location.pathname, state.pathname, action, state.sessions);
+function sessionFactory(history) {
+  var sessionKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : SESSION_KEY;
+
+  return {
+    state: {
+      stack: getSession(sessionKey) || [history.location]
+    },
+    actions: {
+      onSessionChange: function onSessionChange(_ref) {
+        var location = _ref.location,
+            action = _ref.action;
+        return function (_ref2) {
+          var stack = _ref2.stack;
+
+          var nextStack = void 0;
+          switch (action) {
+            case 'PUSH':
+              nextStack = stack.concat(location);
+            case 'REPLACE':
+              nextStack = stack.slice(0, -1).concat(location);
+            case 'POP':
+            default:
+              nextStack = stack;
+          }
+          setSession(sessionKey, nextStack);
+          return { stack: nextStack };
         };
       }
-    };
+    },
+    subscribe: function subscribe(main) {
+      return history.listen(function (location, action) {
+        exports.pathOf(main).onSessionChange({ location: location, action: action });
+      });
+    }
+  };
+}
 
-    var subscribe = function subscribe(actions) {
-      history.listen(function (location, ACTION) {
-        if (!beforeChange(actions, pathOf, history)) {
-          pathOf(actions).onChange({ location: location, action: ACTION });
-          afterChange(actions, pathOf, history);
+function Switch(props, children) {
+  return function (state, actions) {
+    var child,
+        i = 0;
+    while (!(child = children[i] && children[i](state, actions)) && i < children.length) {
+      i++;
+    }return child;
+  };
+}
+
+var NAME = 'router';
+
+function withRouter(app, _ref) {
+    var _ref$name = _ref.name,
+        name = _ref$name === undefined ? NAME : _ref$name,
+        history = _ref.history;
+
+    return function appWraper(state, actions, view, root) {
+        initPathFn(name);
+
+        var router = routerFactory(history);
+
+        state[name] = router.state;
+        actions[name] = router.actions;
+
+        var main = app(state, actions, view, root);
+
+        router.subscribe(main);
+
+        return main;
+    };
+}
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
         }
       });
-      return actions;
-    };
+    }
 
-    return {
-      state: state || stateFactory(path, path, [path], enmuDirection.none),
-      actions: actions,
-      subscribe: subscribe
-    };
-  }
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
 
-  var enmuDirection = {
-    backward: 0,
-    forward: 1,
-    none: 2
-  };
-
-  var stateFactory = function stateFactory(pathname, previous, sessions, direction) {
-    return { pathname: pathname, previous: previous, sessions: sessions, direction: direction };
-  };
-
-  var nextState = function nextState(pathname, previous, action, sessions) {
-    var contained = sessions.indexOf(pathname) > -1;
-    var direction = { POP: 0, PUSH: 1, REPLACE: 2 }[action] + (contained ? 0 : 1);
-    var forward = function forward() {
-      return sessions.concat(pathname);
-    };
-    var backward = function backward() {
-      return sessions.slice(0, -1);
-    };
-    var none = function none() {
-      return sessions.slice(0, -1).concat(pathname);
-    };
-    sessions = [backward, forward, none][direction]();
-    return stateFactory(pathname, previous, sessions, direction);
-  };
-
-  // ==== components ======
-
-
-  function Switch(props, children) {
-    return function (state, actions) {
-      var child,
-          i = 0;
-      while (!(child = children[i] && children[i](state, actions)) && i < children.length) {
-        i++;
-      }return child;
-    };
-  }
-
-  function Route(props) {
-    return function (state, actions) {
-      var state = pathOf(state);
-      var match = parseRoute(props.path, state.pathname, {
-        exact: !props.parent
-      });
-
-      return match && props.render({
-        match: match,
-        state: state
-      });
-    };
-  }
-
-  function Redirect(props) {
-    return function (state, actions) {
-      pathOf(actions).replace(props.to);
-    };
-  }
-
-  /**
-   *
-   * @param {Location | HTMLAnchorElement} loc 
-   */
-  function getOrigin(loc) {
-    return loc.protocol + "//" + loc.hostname + (loc.port ? ":" + loc.port : "");
-  }
-
-  /**
-   *
-   * @param {HTMLAnchorElement} anchorElement 
-   */
-  function isExternal(anchorElement) {
-    // Location.origin and HTMLAnchorElement.origin are not supported by IE and Safari.
-    return getOrigin(window.location) !== getOrigin(anchorElement);
-  }
-
-  function Link(props, children) {
-    return function (state, actions) {
-      var to = props.to;
-      var onclick = props.onclick;
-      delete props.to;
-      delete props.location;
-
-      props.href = to;
-      props.onclick = function (e) {
-        if (onclick) {
-          onclick(e);
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
         }
-        if (e.defaultPrevented || e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || props.target === "_blank" || isExternal(e.currentTarget)) ; else {
-          e.preventDefault();
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
 
-          if (to !== pathOf(state).pathname) {
-            pathOf(actions).push(to);
-          }
-        }
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
       };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
 
-      return hyperapp.h("a", props, children);
-    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
   }
 
-  function withRouter(app) {
-    var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'router';
-    var config = arguments[2];
+  return target;
+};
 
-    return function (state, actions, view, root) {
-      initPathFn(function (state) {
-        return state[name];
-      });
+var NAME$1 = 'router';
 
-      var _routerFactory = routerFactory(config),
-          subscribe = _routerFactory.subscribe,
-          routerState = _routerFactory.state,
-          routerActions = _routerFactory.actions;
+function withRouter$2(app, _ref) {
+    var _ref$name = _ref.name,
+        name = _ref$name === undefined ? NAME$1 : _ref$name,
+        history = _ref.history;
 
-      state[name] = routerState;
-      actions[name] = routerActions;
+    return function appWraper(state, actions, view, root) {
+        initPathFn(name);
 
-      return subscribe(app(state, actions, view, root));
+        var router = routerFactory(history);
+        var session = sessionFactory(history);
+
+        state[name] = _extends({}, router.state, session.state);
+        actions[name] = _extends({}, router.actions, session.actions);
+
+        var main = app(state, actions, view, root);
+
+        router.subscribe(main);
+        session.subscribe(main);
+
+        return main;
     };
-  }
+}
 
-  exports.withRouter = withRouter;
-  exports.initPathFn = initPathFn;
-  exports.routerFactory = routerFactory;
-  exports.enmuDirection = enmuDirection;
-  exports.Switch = Switch;
-  exports.Route = Route;
-  exports.Redirect = Redirect;
-  exports.Link = Link;
+exports.Link = Link;
+exports.init = initPathFn;
+exports.Redirect = Redirect;
+exports.Route = Route;
+exports.routerFactory = routerFactory;
+exports.sessionFactory = sessionFactory;
+exports.Switch = Switch;
+exports.withRouter = withRouter;
+exports.withSession = withRouter$2;
 
-  Object.defineProperty(exports, '__esModule', { value: true });
+Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
