@@ -14,7 +14,7 @@
     "start": "parcel example/index.html --out-dir .edist --no-autoinstall --no-cache",
     "build:umd": "git rm dist/ -r && rollup -c && uglifyjs dist/hoa-router.js -c -m -o dist/hoa-router.min.js && git add dist/ && git commit -m\"umd build\"",
     "build:lib": "npx babel src --out-dir lib && npx babel src --out-dir lib --copy-files",
-    "release": " npm run build:lib && npm run build:dist && npm version patch && npm publish"
+    "release": " npm run build:lib && npm run build:umd && npm version patch && npm publish"
   },
   "repository": {
     "type": "git",
