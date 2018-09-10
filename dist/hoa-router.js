@@ -1,251 +1,378 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('hyperapp')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'hyperapp'], factory) :
-  (factory((global.HoaRouter = {}),global.hyperapp));
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('hyperapp')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'hyperapp'], factory) :
+	(factory((global.HoaRouter = {}),global.hyperapp));
 }(this, (function (exports,hyperapp) { 'use strict';
 
-  exports.pathOf = void 0;
+exports.pathOf = void 0;
 
-  function initPathFn(name) {
-    if (!exports.pathOf) {
-      exports.pathOf = function pathOf(s) {
-        return s[name];
-      };
-    }
+function initPathFn(name) {
+  if (!exports.pathOf) {
+    exports.pathOf = function pathOf(s) {
+      return s[name];
+    };
   }
+}
 
-  function Link(props, children) {
-    return function (state, actions) {
-      var to = props.to;
-      var onclick = props.onclick;
-      delete props.to;
-      delete props.location;
+function Link(props, children) {
+  return function (state, actions) {
+    var to = props.to;
+    var onclick = props.onclick;
+    delete props.to;
+    delete props.location;
 
-      props.href = to;
-      props.onclick = function (e) {
-        if (onclick) {
-          onclick(e);
+    props.href = to;
+    props.onclick = function (e) {
+      if (onclick) {
+        onclick(e);
+      }
+      if (e.defaultPrevented || e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || props.target === "_blank" || isExternal(e.currentTarget)) {} else {
+        e.preventDefault();
+
+        if (to !== exports.pathOf(state).pathname) {
+          exports.pathOf(actions).push(to);
         }
-        if (e.defaultPrevented || e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey || props.target === "_blank" || isExternal(e.currentTarget)) ; else {
-          e.preventDefault();
-
-          if (to !== exports.pathOf(state).pathname) {
-            exports.pathOf(actions).push(to);
-          }
-        }
-      };
-
-      return hyperapp.h("a", props, children);
+      }
     };
+
+    return hyperapp.h("a", props, children);
+  };
+}
+
+/**
+ *
+ * @param {Location | HTMLAnchorElement} loc 
+ */
+function getOrigin(loc) {
+  return loc.protocol + "//" + loc.hostname + (loc.port ? ":" + loc.port : "");
+}
+
+/**
+ *
+ * @param {HTMLAnchorElement} anchorElement 
+ */
+function isExternal(anchorElement) {
+  // Location.origin and HTMLAnchorElement.origin are not supported by IE and Safari.
+  return getOrigin(window.location) !== getOrigin(anchorElement);
+}
+
+function Redirect(props) {
+  return function (state, actions) {
+    exports.pathOf(actions).replace(props.to);
+  };
+}
+
+function createMatch(isExact, path, url, params) {
+  return {
+    isExact: isExact,
+    path: path,
+    url: url,
+    params: params
+  };
+}
+
+function trimTrailingSlash(url) {
+  for (var len = url.length; "/" === url[--len];) {}
+  return url.slice(0, len + 1);
+}
+
+function decodeParam(val) {
+  try {
+    return decodeURIComponent(val);
+  } catch (e) {
+    return val;
+  }
+}
+
+function parseRoute(path, url, options) {
+  if (path === url || !path) {
+    return createMatch(path === url, path, url);
   }
 
-  /**
-   *
-   * @param {Location | HTMLAnchorElement} loc 
-   */
-  function getOrigin(loc) {
-    return loc.protocol + "//" + loc.hostname + (loc.port ? ":" + loc.port : "");
+  var exact = options && options.exact;
+  var paths = trimTrailingSlash(path).split("/");
+  var urls = trimTrailingSlash(url).split("/");
+
+  if (paths.length > urls.length || exact && paths.length < urls.length) {
+    return;
   }
 
-  /**
-   *
-   * @param {HTMLAnchorElement} anchorElement 
-   */
-  function isExternal(anchorElement) {
-    // Location.origin and HTMLAnchorElement.origin are not supported by IE and Safari.
-    return getOrigin(window.location) !== getOrigin(anchorElement);
-  }
-
-  function Redirect(props) {
-    return function (state, actions) {
-      exports.pathOf(actions).replace(props.to);
-    };
-  }
-
-  function createMatch(isExact, path, url, params) {
-    return {
-      isExact: isExact,
-      path: path,
-      url: url,
-      params: params
-    };
-  }
-
-  function trimTrailingSlash(url) {
-    for (var len = url.length; "/" === url[--len];) {}
-    return url.slice(0, len + 1);
-  }
-
-  function decodeParam(val) {
-    try {
-      return decodeURIComponent(val);
-    } catch (e) {
-      return val;
-    }
-  }
-
-  function parseRoute(path, url, options) {
-    if (path === url || !path) {
-      return createMatch(path === url, path, url);
-    }
-
-    var exact = options && options.exact;
-    var paths = trimTrailingSlash(path).split("/");
-    var urls = trimTrailingSlash(url).split("/");
-
-    if (paths.length > urls.length || exact && paths.length < urls.length) {
+  for (var i = 0, params = {}, len = paths.length, url = ""; i < len; i++) {
+    if (":" === paths[i][0]) {
+      params[paths[i].slice(1)] = urls[i] = decodeParam(urls[i]);
+    } else if (paths[i] !== urls[i]) {
       return;
     }
-
-    for (var i = 0, params = {}, len = paths.length, url = ""; i < len; i++) {
-      if (":" === paths[i][0]) {
-        params[paths[i].slice(1)] = urls[i] = decodeParam(urls[i]);
-      } else if (paths[i] !== urls[i]) {
-        return;
-      }
-      url += urls[i] + "/";
-    }
-
-    return createMatch(false, path, url.slice(0, -1), params);
+    url += urls[i] + "/";
   }
 
-  function Route(props) {
-    return function (state, actions) {
-      var state = exports.pathOf(state);
-      var match = parseRoute(props.path, state.pathname, {
-        exact: !props.parent
-      });
+  return createMatch(false, path, url.slice(0, -1), params);
+}
 
-      return match && props.render({
-        match: match,
-        state: state
-      });
-    };
-  }
+function Route(props) {
+  return function (state, actions) {
+    var state = exports.pathOf(state);
+    var match = parseRoute(props.path, state.pathname, {
+      exact: !props.parent
+    });
 
-  function routerFactory(history) {
-    var state = {
-      pathname: history.location.pathname,
-      previous: null
-    };
+    return match && props.render({
+      match: match,
+      state: state
+    });
+  };
+}
 
-    var actions = {
-      push: function push(path) {
-        history.push(path);
-      },
-      replace: function replace(path) {
-        history.replace(path);
-      },
-      onChange: function onChange(_ref) {
-        var location = _ref.location;
-        return function (_ref2) {
-          var previous = _ref2.pathname;
-
-          return {
-            pathname: location.pathname,
-            previous: previous
-          };
-        };
-      }
-    };
-
-    var sub = function sub(main) {
-      return history.listen(function (location) {
-        exports.pathOf(main).onChange({ location: location });
-      });
-    };
-
-    return {
-      state: state,
-      actions: actions,
-      sub: sub
-    };
-  }
-
-  function Switch(props, children) {
-    return function (state, actions) {
-      var child,
-          i = 0;
-      while (!(child = children[i] && children[i](state, actions)) && i < children.length) {
-        i++;
-      }return child;
-    };
-  }
-
-  var _extends = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-
-    return target;
+function routerFactory(history) {
+  var state = {
+    pathname: history.location.pathname,
+    previous: null
   };
 
-  /**
-   * @param {{state: Object, actions: Object, subscribe: () => Function}[]} factories
-   */
-  function combineFactories(factories) {
-    return factories.reduce(function (_ref, _ref2) {
-      var prevState = _ref.state,
-          prevActions = _ref.actions,
-          subscribes = _ref.subscribes;
-      var state = _ref2.state,
-          actions = _ref2.actions,
-          subscribe = _ref2.subscribe;
+  var actions = {
+    push: function push(path) {
+      history.push(path);
+    },
+    replace: function replace(path) {
+      history.replace(path);
+    },
+    onChange: function onChange(_ref) {
+      var location = _ref.location;
+      return function (_ref2) {
+        var previous = _ref2.pathname;
 
-      return {
-        state: _extends({}, prevState, state),
-        actions: _extends({}, prevActions, actions),
-        subscribes: subscribes.concat(subscribe)
+        return {
+          pathname: location.pathname,
+          previous: previous
+        };
       };
-    }, { state: {}, actions: {}, subscribes: [] });
+    }
+  };
+
+  var sub = function sub(main) {
+    return history.listen(function (location) {
+      exports.pathOf(main).onChange({ location: location });
+    });
+  };
+
+  return {
+    state: state,
+    actions: actions,
+    sub: sub
+  };
+}
+
+function Switch(props, children) {
+  return function (state, actions) {
+    var child,
+        i = 0;
+    while (!(child = children[i] && children[i](state, actions)) && i < children.length) {
+      i++;
+    }return child;
+  };
+}
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
   }
 
-  var NAME = 'router';
+  function AsyncGenerator(gen) {
+    var front, back;
 
-  function withRouter(app, _ref3) {
-    var _ref3$moduleName = _ref3.moduleName,
-        moduleName = _ref3$moduleName === undefined ? NAME : _ref3$moduleName,
-        _ref3$unSubName = _ref3.unSubName,
-        unSubName = _ref3$unSubName === undefined ? 'unSubAll' : _ref3$unSubName,
-        _ref3$factories = _ref3.factories,
-        factories = _ref3$factories === undefined ? [] : _ref3$factories;
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
 
-    return function appWraper(state, actions, view, root) {
-      initPathFn(moduleName);
-
-      var factory = combineFactories(factories);
-      state[moduleName] = factory.state;
-      actions[moduleName] = factory.actions;
-
-      var main = app(state, actions, view, root);
-      var unSubs = factory.subscribes.map(function (sub) {
-        return sub(main);
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
       });
+    }
 
-      main[unSubName] = function () {
-        return unSubs.map(function (unSub) {
-          return unSub();
-        });
-      };
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
 
-      return main;
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
     };
   }
 
-  exports.Link = Link;
-  exports.init = initPathFn;
-  exports.Redirect = Redirect;
-  exports.Route = Route;
-  exports.routerFactory = routerFactory;
-  exports.Switch = Switch;
-  exports.withRouter = withRouter;
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
 
-  Object.defineProperty(exports, '__esModule', { value: true });
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+/**
+ * @param {{state: Object, actions: Object, sub: () => Function}[]} factories
+ */
+function combineFactories(factories) {
+  return factories.reduce(function (_ref, _ref2) {
+    var prevState = _ref.state,
+        prevActions = _ref.actions,
+        subs = _ref.subs;
+    var state = _ref2.state,
+        actions = _ref2.actions,
+        sub = _ref2.sub;
+
+    return {
+      state: _extends({}, prevState, state),
+      actions: _extends({}, prevActions, actions),
+      subs: subs.concat(sub)
+    };
+  }, { state: {}, actions: {}, subs: [] });
+}
+
+var NAME = 'router';
+
+function withRouter(app, _ref3) {
+  var _ref3$moduleName = _ref3.moduleName,
+      moduleName = _ref3$moduleName === undefined ? NAME : _ref3$moduleName,
+      _ref3$unSubName = _ref3.unSubName,
+      unSubName = _ref3$unSubName === undefined ? 'unSubAll' : _ref3$unSubName,
+      _ref3$factories = _ref3.factories,
+      factories = _ref3$factories === undefined ? [] : _ref3$factories;
+
+  return function appWraper(state, actions, view, root) {
+    initPathFn(moduleName);
+
+    var factory = combineFactories(factories);
+    state[moduleName] = factory.state;
+    actions[moduleName] = factory.actions;
+
+    var main = app(state, actions, view, root);
+    var unSubs = factory.subs.map(function (sub) {
+      return sub(main);
+    });
+
+    main[unSubName] = function () {
+      return unSubs.map(function (unSub) {
+        return unSub();
+      });
+    };
+
+    return main;
+  };
+}
+
+exports.Link = Link;
+exports.init = initPathFn;
+exports.Redirect = Redirect;
+exports.Route = Route;
+exports.routerFactory = routerFactory;
+exports.Switch = Switch;
+exports.withRouter = withRouter;
+
+Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
