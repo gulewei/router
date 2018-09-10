@@ -1,21 +1,27 @@
 import { createHashHistory } from 'history'
-import { routerFactory, sessionFactory } from '../src'
+import { routerFactory } from '../src'
+import sessionFactory from '../src/session-factory'
 
 export const history = createHashHistory({ hashType: 'hashbang' })
-
 window.$history = history
 
-const session = sessionFactory(history)
-
-session.actions.onPageEnter = (runEnter) => ({ direction }) => {
-  runEnter(direction)
-}
-
-session.actions.onPageExit = (runExit) => ({ direction }) => {
-  runExit(direction)
+const animateFactory = () => {
+  return {
+    state: {},
+    actions: {
+      onPageEnter: (runEnter) => ({ direction }) => {
+        runEnter(direction)
+      },
+      onPageExit: (runExit) => ({ direction }) => {
+        runExit(direction)
+      }
+    },
+    sub: () => () => { }
+  }
 }
 
 export const factories = [
   routerFactory(history),
-  session
+  sessionFactory(history),
+  animateFactory()
 ]

@@ -1,18 +1,18 @@
 import init from './path-of'
 
 /**
- * @param {{state: Object, actions: Object, subscribe: () => Function}[]} factories
+ * @param {{state: Object, actions: Object, sub: () => Function}[]} factories
  */
 function combineFactories (factories) {
   return factories.reduce(
-    ({ state: prevState, actions: prevActions, subscribes }, { state, actions, subscribe }) => {
+    ({ state: prevState, actions: prevActions, subs }, { state, actions, sub }) => {
       return {
         state: { ...prevState, ...state },
         actions: { ...prevActions, ...actions },
-        subscribes: subscribes.concat(subscribe)
+        subs: subs.concat(sub)
       }
     },
-    { state: {}, actions: {}, subscribes: [] }
+    { state: {}, actions: {}, subs: [] }
   )
 }
 
@@ -27,7 +27,7 @@ function withRouter (app, { moduleName = NAME, unSubName = 'unSubAll', factories
     actions[moduleName] = factory.actions
 
     const main = app(state, actions, view, root)
-    const unSubs = factory.subscribes.map(sub => sub(main))
+    const unSubs = factory.subs.map(sub => sub(main))
 
     main[unSubName] = () => unSubs.map(unSub => unSub())
 

@@ -32,7 +32,7 @@ type HoaConfig = {
 export interface Factory<State = Object, Actions = Object> {
   state: State,
   actions: Actions,
-  subscribe: (main: Object) => () => void
+  sub: (main: Object) => () => void
 }
 
 export function routerFactory (history: History): Factory<RouterState, RouterActions>
