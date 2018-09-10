@@ -5,8 +5,8 @@
 ```js
 import { app, h } from 'hyperapp'
 import { createHashHistory } from 'history'
-import { createRouter } from 'hyperapp-hoa-router'
-import view from '@components/App'
+import { withRouter } from 'hyperapp-hoa-router'
+import App from './components/App'
 
 const history = createHashHistory()
 const myRouter = createRouter(history)

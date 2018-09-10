@@ -20,7 +20,7 @@ function decodeParam (val) {
   }
 }
 
-export function parseRoute (path, url, options) {
+function parseRoute (path, url, options) {
   if (path === url || !path) {
     return createMatch(path === url, path, url)
   }
@@ -44,3 +44,5 @@ export function parseRoute (path, url, options) {
 
   return createMatch(false, path, url.slice(0, -1), params)
 }
+
+export default parseRoute

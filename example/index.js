@@ -1,9 +1,13 @@
 import './style.css'
-import { app } from "hyperapp"
-import { state, actions, myRouter } from './store'
+import { app } from 'hyperapp'
+import { history } from './store'
+import { withSession } from '../src'
 import App from './App/App'
 
-const appActions = app(state, actions, App, document.body)
-const unsubscribe = myRouter.subscribe(appActions.router)
+const config = {
+  history,
+  name: 'my',
+  sessionKey: '_my_session_key_'
+}
 
-export { unsubscribe }
+withSession(app, config)({}, {}, App, document.body)

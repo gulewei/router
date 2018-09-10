@@ -16,7 +16,23 @@ const config = {
   plugins: [
     resolve(),
     babel({
-      exclude: "node_modules/**"
+      babelrc: false,
+      exclude: "node_modules/**",
+      "presets": [
+        [
+          "env", { modules: false }
+        ]
+      ],
+      "plugins": [
+        [
+          "transform-react-jsx",
+          {
+            "pragma": "h"
+          }
+        ],
+        "transform-object-rest-spread",
+        "external-helpers"
+      ]
     })
   ]
 };

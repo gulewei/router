@@ -1,8 +1,8 @@
 import { h } from 'hyperapp'
 
-const Page = ({ name }, children) => {
+const Page = ({ key }, children) => {
   return (
-    <div class={`page page-${name}`} key={name}>
+    <div class={`page page-${key}`} key={key}>
       <div class="page-inner">{children}</div>
     </div>
   )
