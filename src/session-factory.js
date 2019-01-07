@@ -12,11 +12,11 @@ export const DIRECTION = {
 
 
 function sessionFactory(history, sessionKey = SESSION_KEY) {
-    const getSession = () => JSON.parse(store.getItem(sessionKey)) || void 0
+    const getSession = () => JSON.parse(store.getItem(sessionKey))
     const setSession = (val) => store.setItem(sessionKey, JSON.stringify(val))
 
     const state = {
-        session: nextSession(history.location.pathname, 'POP', getSession()),
+        session: nextSession(history.location.pathname, 'POP', getSession() || void 0),
         direction: DIRECTION.none
     }
     setSession(state.session)

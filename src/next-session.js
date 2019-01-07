@@ -1,7 +1,6 @@
 
 /**
  * 
- * 
  * @typedef {Array<string | void>} Stack - a minimal mock of history stack
  * @typedef {number} Pointer - current history entry
  * @typedef {[Stack, Pointer]} Session - reuseable data that expected to have persistence in browser session
@@ -13,13 +12,16 @@
  * 
  * @returns {Session} Next session's stack and it's pointer
  */
-export function nextSession(entry, action, [stack] = [[void 0]], indexOf = defaultIndexOf) {
+export function nextSession(entry, action, [stack, prevPointer] = [[]], indexOf = defaultIndexOf) {
     let pointer = window.history.length
 
     switch (action) {
         case 'POP':
             // when page loaded it could be a reload rather than load a new page.
             if (stack.length - 1 !== pointer) {
+                if (prevPointer) {
+                    stack = stack.slice(0, prevPointer + 1)
+                }
                 return nextSession(entry, 'PUSH', [stack], indexOf)
             }
             pointer = indexOf(stack, entry)
@@ -37,7 +39,7 @@ export function nextSession(entry, action, [stack] = [[void 0]], indexOf = defau
 
 /**
  * 
- * @typedef {(stack: Stack, url: string) => number} IndexOfFn default use Array.lastIndexOf
+ * @typedef {(stack: Stack, entry: string) => number} IndexOfFn default use Array.lastIndexOf
  * 
  * @type {IndexOfFn}
  */
