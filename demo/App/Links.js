@@ -7,10 +7,7 @@ const HomeLink = () => (state) => {
     <a
       class='page-link'
       onclick={() => {
-        const stack = pathOf(state).stack.map(loc => loc.pathname)
-        history.go(
-          stack.indexOf('/') - stack.indexOf(history.location.pathname)
-        )
+        pathOf(actions).popTo('/')
       }}
     >
       Back home

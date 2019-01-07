@@ -1,30 +1,51 @@
 import { pathOf } from './path-of'
+import { nextSession, delta } from './nextSession';
 
 const SESSION_KEY = '_hoa_router_session'
 const store = window.sessionStorage
 
-const DIRECTION = {
+export const DIRECTION = {
     forward: 'forward',
     backward: 'backward',
     none: 'none'
 }
 
-function sessionFactory (history, sessionKey = SESSION_KEY) {
-    const getSession = () => JSON.parse(store.getItem(sessionKey))
+
+function sessionFactory(history, sessionKey = SESSION_KEY) {
+    const getSession = () => JSON.parse(store.getItem(sessionKey)) || []
     const setSession = (val) => store.setItem(sessionKey, JSON.stringify(val))
-    const initStack = nextSession(history.location, history.action, getSession() || []).stack
-    setSession(initStack)
+    const session = nextSession(history.location.pathname, history.action, getSession())
+    setSession(session)
 
     return {
         state: {
-            stack: initStack,
+            session,
             direction: DIRECTION.none
         },
         actions: {
-            onSessionChange: ({ location, action }) => ({ stack }) => {
-                const session = nextSession(location, action, stack)
-                setSession(session.stack)
-                return session
+            onSessionChange: ({ location: { pathname }, action }) => ({ session }) => {
+                const next = nextSession(pathname, action, session)
+                setSession(next)
+
+                let direction
+                switch (next[1] - session[1]) {
+                    case 0:
+                        direction = DIRECTION.none
+                        break
+                    case Math.abs(next[1] - session[1]):
+                        direction = DIRECTION.forward
+                        break
+                    default:
+                        direction = DIRECTION.backward
+                        break
+                }
+
+                return { session: next, direction }
+            },
+            popTo: (url) => ({ session }) => {
+                const _delta = delta(session, url)
+                console.log('delta', _delta)
+                history.go(_delta)
             }
         },
         sub: (main) => {
@@ -33,27 +54,6 @@ function sessionFactory (history, sessionKey = SESSION_KEY) {
             })
         }
     }
-}
-
-function nextSession (location, action, stack) {
-    let direction
-    let nextStack
-    switch (action) {
-        case 'PUSH':
-            nextStack = stack.concat(location)
-            direction = DIRECTION.forward
-            break
-        case 'REPLACE':
-            nextStack = stack.slice(0, -1).concat(location)
-            direction = DIRECTION.none
-            break
-        case 'POP':
-        default:
-            const i = stack.map(loc => loc.pathname).indexOf(location.pathname)
-            direction = i > -1 ? DIRECTION.backward : DIRECTION.forward
-            nextStack = i > -1 ? stack.slice(0, i + 1) : stack.concat(location)
-    }
-    return { stack: nextStack, direction }
 }
 
 export default sessionFactory
