@@ -3,12 +3,12 @@ import init from './path-of'
 /**
  * @param {{state: Object, actions: Object, sub: () => Function}[]} factories
  */
-function combineFactories (factories) {
+function combineFactories(factories) {
   return factories.reduce(
     ({ state: prevState, actions: prevActions, subs }, { state, actions, sub }) => {
       return {
         state: { ...prevState, ...state },
-        actions: { ...prevActions, ...actions },
+        actions: Object.assign({}, prevActions, actions),
         subs: subs.concat(sub)
       }
     },
@@ -18,8 +18,8 @@ function combineFactories (factories) {
 
 const NAME = 'router'
 
-function withRouter (app, { moduleName = NAME, unSubName = 'unSubAll', factories = [] }) {
-  return function appWraper (state, actions, view, root) {
+function withRouter(app, { moduleName = NAME, unSubName = 'unSubAll', factories = [] }) {
+  return function appWraper(state, actions, view, root) {
     init(moduleName)
 
     const factory = combineFactories(factories)
