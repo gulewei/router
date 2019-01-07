@@ -11,10 +11,10 @@ export const DIRECTION = {
 
 
 function sessionFactory(history, sessionKey = SESSION_KEY) {
-    const [initial, udpate] = withStorage(sessionKey, history.location.pathname)
+    const [udpate, get] = withStorage(sessionKey, history.location.pathname)
 
     const state = {
-        session: initial,
+        session: get(),
         direction: DIRECTION.none
     }
 
@@ -22,7 +22,7 @@ function sessionFactory(history, sessionKey = SESSION_KEY) {
         state,
         actions: {
             onSessionChange: ({ location: { pathname }, action }) => ({ session }) => {
-                const next = udpate(pathname, action, session)
+                const next = udpate(pathname, action)
 
                 let direction
                 switch (next[1] - session[1]) {

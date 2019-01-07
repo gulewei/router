@@ -62,26 +62,32 @@ export function delta([stack, pointer], entry, indexOf = defaultIndexOf) {
 
 /**
  * 
- * @typedef {(entry: string, action: Action, lastSession: Session, indexOf?: IndexOfFn) => Session} UpdateSession
- * 
  * @param {string} storageKey 
  * @param {string} entry 
  * @param {IndexOfFn} [indexOf]
- * 
- * @returns {[Session, UpdateSession, () => Session | void]}
  */
 export function withStorage(storageKey, entry, indexOf) {
+    /**
+     * @returns {Session} maybe `null` if not initialized
+     */
     const get = () => JSON.parse(window.sessionStorage.getItem(storageKey))
+
     const set = (val) => {
         window.sessionStorage.setItem(storageKey, JSON.stringify(val))
         return val
     }
 
-    const update = (entry, action, session) => set(nextSession(entry, action, session, indexOf))
-    const initial = update(entry, 'POP', get() || void 0)
+    /**
+     * 
+     * @param {string} entry 
+     * @param {Action} action 
+     */
+    const update = (entry, action) => set(nextSession(entry, action, get() || void 0, indexOf))
+
+    // initialize
+    update(entry, 'POP')
 
     return [
-        initial,
         update,
         get
     ]
