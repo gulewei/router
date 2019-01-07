@@ -1,8 +1,7 @@
 import { pathOf } from './path-of'
-import { nextSession, delta } from './next-session';
+import { withStorage, delta } from './next-session';
 
 const SESSION_KEY = '_hoa_router_session'
-const store = window.sessionStorage
 
 export const DIRECTION = {
     forward: 'forward',
@@ -12,21 +11,18 @@ export const DIRECTION = {
 
 
 function sessionFactory(history, sessionKey = SESSION_KEY) {
-    const getSession = () => JSON.parse(store.getItem(sessionKey))
-    const setSession = (val) => store.setItem(sessionKey, JSON.stringify(val))
+    const [initial, udpate] = withStorage(sessionKey, history.location.pathname)
 
     const state = {
-        session: nextSession(history.location.pathname, 'POP', getSession() || void 0),
+        session: initial,
         direction: DIRECTION.none
     }
-    setSession(state.session)
 
     return {
         state,
         actions: {
             onSessionChange: ({ location: { pathname }, action }) => ({ session }) => {
-                const next = nextSession(pathname, action, session)
-                setSession(next)
+                const next = udpate(pathname, action, session)
 
                 let direction
                 switch (next[1] - session[1]) {
@@ -44,8 +40,6 @@ function sessionFactory(history, sessionKey = SESSION_KEY) {
                 return { session: next, direction }
             },
             popTo: (url) => ({ session }) => {
-                const _delta = delta(session, url)
-                console.log('delta', _delta)
                 history.go(delta(session, url))
             }
         },
