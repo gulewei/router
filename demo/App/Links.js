@@ -2,7 +2,7 @@ import { h } from 'hyperapp'
 import { history } from '../router'
 import { Link, pathOf } from '../../src'
 
-const HomeLink = () => (state) => {
+const HomeLink = () => (_, actions) => {
   return (
     <a
       class='page-link'
@@ -16,7 +16,7 @@ const HomeLink = () => (state) => {
 }
 
 const BackButton = () => (
-  <button class='back-button' onclick={() => history.goBack()}>back</button>
+  <button class='back-button' onclick={() => window.history.back()}>back</button>
 )
 
 const withBlock = () => {
