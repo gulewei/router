@@ -1,6 +1,6 @@
 ## A Hyperapp Router
 
-## [Demo](https://venecy.github.io/router/demo/)
+## [Demo](https://gulewei.github.io/router/demo/)
 
 ## Quick Start
 
